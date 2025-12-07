@@ -8,7 +8,13 @@
     "dev": "nodemon server.js",
     "test": "echo \"No tests specified\" && exit 0"
   },
-  "keywords": ["wedding", "face-recognition", "games", "events", "photo-gallery"],
+  "keywords": [
+    "wedding",
+    "face-recognition",
+    "games",
+    "events",
+    "photo-gallery"
+  ],
   "author": "Wedding App Team",
   "license": "MIT",
   "dependencies": {
@@ -17,6 +23,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.1",
     "multer": "^2.0.2",

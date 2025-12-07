@@ -2,18 +2,19 @@ const express = require('express');
 const router = express.Router();
 const eventController = require('../controllers/eventController');
 const { auth, adminAuth } = require('../middleware/auth');
+const { apiLimiter, createLimiter } = require('../middleware/rateLimiter');
 
-// Public routes
-router.get('/', eventController.getAllEvents);
-router.get('/:id', eventController.getEventById);
+// Public routes with rate limiting
+router.get('/', apiLimiter, eventController.getAllEvents);
+router.get('/:id', apiLimiter, eventController.getEventById);
 
-// Protected routes
-router.post('/:id/rsvp', auth, eventController.rsvpEvent);
+// Protected routes with rate limiting
+router.post('/:id/rsvp', apiLimiter, auth, eventController.rsvpEvent);
 
-// Admin routes
-router.post('/', adminAuth, eventController.createEvent);
-router.put('/:id', adminAuth, eventController.updateEvent);
-router.delete('/:id', adminAuth, eventController.deleteEvent);
-router.post('/send-notifications', adminAuth, eventController.sendEventNotifications);
+// Admin routes with rate limiting
+router.post('/', createLimiter, adminAuth, eventController.createEvent);
+router.put('/:id', createLimiter, adminAuth, eventController.updateEvent);
+router.delete('/:id', createLimiter, adminAuth, eventController.deleteEvent);
+router.post('/send-notifications', createLimiter, adminAuth, eventController.sendEventNotifications);
 
 module.exports = router;
