@@ -106,8 +106,9 @@ exports.filterPhotosByFace = async (req, res) => {
           }, 0)
         );
         
-        // Threshold for matching (adjust as needed)
-        return distance < 0.6;
+        // Threshold for matching (configurable via environment variable)
+        const FACE_MATCH_THRESHOLD = parseFloat(process.env.FACE_MATCH_THRESHOLD) || 0.6;
+        return distance < FACE_MATCH_THRESHOLD;
       });
     });
     

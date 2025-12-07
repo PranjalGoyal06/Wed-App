@@ -25,10 +25,13 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// File size limit from environment or default to 10MB
+const MAX_FILE_SIZE = process.env.MAX_FILE_SIZE || 10 * 1024 * 1024;
+
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
+    fileSize: MAX_FILE_SIZE
   },
   fileFilter: fileFilter
 });
