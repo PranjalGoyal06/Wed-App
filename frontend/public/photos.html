@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photos - Wedding App</title>
+    <link rel="stylesheet" href="/frontend/src/styles/main.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>💒 Wedding App</h1>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html">Home</a>
+                <a href="photos.html">Photos</a>
+                <a href="games.html">Games</a>
+                <a href="challenges.html">Challenges</a>
+                <a href="events.html">Events</a>
+                <a href="admin.html" id="adminLink" style="display: none;">Admin</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="#" id="logoutLink" style="display: none;">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <section style="padding: 2rem 0; background: #f9f9f9; min-height: calc(100vh - 200px);">
+        <div class="container">
+            <h1 style="color: #667eea; margin-bottom: 2rem;">📸 Photo Gallery</h1>
+            
+            <!-- Upload Section -->
+            <div class="form-container" id="uploadSection" style="display: none;">
+                <h3>Upload Photo</h3>
+                <div id="uploadAlert"></div>
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label for="photoFile">Select Photo</label>
+                        <input type="file" id="photoFile" name="photo" accept="image/*" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tags">Tags (comma separated)</label>
+                        <input type="text" id="tags" name="tags" placeholder="bride, groom, ceremony">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload Photo</button>
+                </form>
+            </div>
+
+            <!-- Face Recognition Filter -->
+            <div class="form-container" id="faceFilterSection" style="display: none; margin-top: 2rem;">
+                <h3>🔍 Filter Photos by Your Face</h3>
+                <p>Upload a photo of yourself to find all photos containing your face!</p>
+                <div id="faceAlert"></div>
+                <input type="file" id="facePhotoFile" accept="image/*" class="form-group">
+                <button id="filterByFaceBtn" class="btn btn-primary">Find My Photos</button>
+            </div>
+
+            <!-- Photo Gallery -->
+            <div id="photosLoading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading photos...</p>
+            </div>
+            <div id="photoGallery" class="photo-gallery"></div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Wedding App. Made with ❤️ for your special day!</p>
+        </div>
+    </footer>
+
+    <script src="/frontend/src/utils/auth.js"></script>
+    <script src="/frontend/src/utils/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = localStorage.getItem('token');
+            
+            // Show upload section if authenticated
+            if (token) {
+                document.getElementById('uploadSection').style.display = 'block';
+                document.getElementById('faceFilterSection').style.display = 'block';
+            }
+            
+            // Load photos
+            await loadPhotos();
+            
+            // Upload form handler
+            document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const formData = new FormData();
+                const photoFile = document.getElementById('photoFile').files[0];
+                const tags = document.getElementById('tags').value.split(',').map(t => t.trim());
+                
+                formData.append('photo', photoFile);
+                formData.append('tags', JSON.stringify(tags));
+                
+                try {
+                    const response = await api.uploadPhoto(formData);
+                    document.getElementById('uploadAlert').innerHTML = 
+                        '<div class="alert alert-success">Photo uploaded successfully!</div>';
+                    document.getElementById('uploadForm').reset();
+                    await loadPhotos();
+                } catch (error) {
+                    document.getElementById('uploadAlert').innerHTML = 
+                        '<div class="alert alert-error">Upload failed. Please try again.</div>';
+                }
+            });
+            
+            // Face filter handler (simplified for demo)
+            document.getElementById('filterByFaceBtn').addEventListener('click', async () => {
+                const faceFile = document.getElementById('facePhotoFile').files[0];
+                if (!faceFile) {
+                    document.getElementById('faceAlert').innerHTML = 
+                        '<div class="alert alert-error">Please select a photo first.</div>';
+                    return;
+                }
+                
+                // In production, this would extract face descriptors from the image
+                // For demo, we'll show all photos
+                document.getElementById('faceAlert').innerHTML = 
+                    '<div class="alert alert-info">Face recognition feature requires face-api.js library. Showing all photos for demo.</div>';
+                await loadPhotos();
+            });
+        });
+        
+        async function loadPhotos() {
+            const gallery = document.getElementById('photoGallery');
+            const loading = document.getElementById('photosLoading');
+            
+            loading.style.display = 'block';
+            gallery.innerHTML = '';
+            
+            try {
+                const response = await api.getAllPhotos();
+                loading.style.display = 'none';
+                
+                if (response.photos && response.photos.length > 0) {
+                    response.photos.forEach(photo => {
+                        const photoCard = createPhotoCard(photo);
+                        gallery.appendChild(photoCard);
+                    });
+                } else {
+                    gallery.innerHTML = '<p style="text-align: center; grid-column: 1/-1;">No photos yet. Be the first to upload!</p>';
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                gallery.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: red;">Error loading photos.</p>';
+            }
+        }
+        
+        function createPhotoCard(photo) {
+            const card = document.createElement('div');
+            card.className = 'photo-card';
+            
+            const imgPath = photo.path.replace(/\\/g, '/');
+            
+            card.innerHTML = `
+                <img src="http://localhost:5000/${imgPath}" alt="${photo.originalName}" 
+                     onerror="this.src='https://via.placeholder.com/250?text=Photo'">
+                <div class="photo-card-content">
+                    <p><strong>${photo.uploadedBy?.name || 'Unknown'}</strong></p>
+                    <p style="font-size: 0.9rem; color: #666;">
+                        ${new Date(photo.createdAt).toLocaleDateString()}
+                    </p>
+                    ${photo.tags && photo.tags.length > 0 ? 
+                        `<p style="font-size: 0.85rem;">Tags: ${photo.tags.join(', ')}</p>` : ''}
+                    <div style="margin-top: 0.5rem;">
+                        <button class="btn btn-primary" style="padding: 0.3rem 0.8rem; font-size: 0.9rem;" 
+                                onclick="likePhoto('${photo._id}')">
+                            ❤️ ${photo.likes?.length || 0}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        async function likePhoto(photoId) {
+            if (!localStorage.getItem('token')) {
+                alert('Please login to like photos');
+                return;
+            }
+            
+            try {
+                await api.likePhoto(photoId);
+                await loadPhotos();
+            } catch (error) {
+                console.error('Error liking photo:', error);
+            }
+        }
+    </script>
+</body>
+</html>

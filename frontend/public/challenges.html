@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenges - Wedding App</title>
+    <link rel="stylesheet" href="/frontend/src/styles/main.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>💒 Wedding App</h1>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html">Home</a>
+                <a href="photos.html">Photos</a>
+                <a href="games.html">Games</a>
+                <a href="challenges.html">Challenges</a>
+                <a href="events.html">Events</a>
+                <a href="admin.html" id="adminLink" style="display: none;">Admin</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="#" id="logoutLink" style="display: none;">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <section style="padding: 2rem 0; background: #f9f9f9; min-height: calc(100vh - 200px);">
+        <div class="container">
+            <h1 style="color: #667eea; margin-bottom: 2rem;">🏆 Wedding Challenges</h1>
+            
+            <div id="challengesLoading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading challenges...</p>
+            </div>
+            
+            <div id="challengesGrid" class="game-grid"></div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Wedding App. Made with ❤️ for your special day!</p>
+        </div>
+    </footer>
+
+    <script src="/frontend/src/utils/auth.js"></script>
+    <script src="/frontend/src/utils/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadChallenges();
+        });
+        
+        async function loadChallenges() {
+            const grid = document.getElementById('challengesGrid');
+            const loading = document.getElementById('challengesLoading');
+            
+            loading.style.display = 'block';
+            grid.innerHTML = '';
+            
+            try {
+                const response = await api.getAllChallenges();
+                loading.style.display = 'none';
+                
+                if (response.challenges && response.challenges.length > 0) {
+                    response.challenges.forEach(challenge => {
+                        const challengeCard = createChallengeCard(challenge);
+                        grid.appendChild(challengeCard);
+                    });
+                } else {
+                    grid.innerHTML = '<p style="text-align: center; grid-column: 1/-1;">No challenges available yet.</p>';
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                grid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: red;">Error loading challenges.</p>';
+            }
+        }
+        
+        function createChallengeCard(challenge) {
+            const card = document.createElement('div');
+            card.className = 'game-card';
+            
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const userParticipation = challenge.participants?.find(p => p.user?._id === user.id);
+            const isParticipating = !!userParticipation;
+            const status = userParticipation?.status || '';
+            
+            let statusBadge = '';
+            if (status === 'pending') {
+                statusBadge = '<span style="background: #ffc107; color: #000; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">In Progress</span>';
+            } else if (status === 'completed') {
+                statusBadge = '<span style="background: #17a2b8; color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">Submitted</span>';
+            } else if (status === 'verified') {
+                statusBadge = '<span style="background: #28a745; color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">✓ Verified</span>';
+            }
+            
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <h3>${challenge.title}</h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
+                        <span style="background: #667eea; color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">
+                            ${challenge.type}
+                        </span>
+                        ${statusBadge}
+                    </div>
+                </div>
+                <p style="margin: 1rem 0; color: #666;">${challenge.description}</p>
+                <p style="margin: 0.5rem 0; color: #555;"><strong>Requirements:</strong> ${challenge.requirements || 'See details'}</p>
+                <div style="margin: 1rem 0;">
+                    <p style="font-size: 0.9rem; color: #667eea; font-weight: bold;">
+                        🎯 ${challenge.points} points
+                    </p>
+                    <p style="font-size: 0.9rem;">
+                        👥 ${challenge.participants?.length || 0} participants
+                    </p>
+                    ${challenge.deadline ? `<p style="font-size: 0.85rem; color: #666;">Deadline: ${new Date(challenge.deadline).toLocaleDateString()}</p>` : ''}
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    ${!isParticipating ? 
+                        `<button class="btn btn-primary" onclick="joinChallenge('${challenge._id}')">Join Challenge</button>` :
+                        status === 'pending' ?
+                        `<button class="btn btn-success" onclick="submitChallenge('${challenge._id}')">Submit</button>` :
+                        `<button class="btn btn-secondary" disabled>Submitted</button>`
+                    }
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        async function joinChallenge(challengeId) {
+            if (!localStorage.getItem('token')) {
+                alert('Please login to join challenges');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                await api.joinChallenge(challengeId);
+                alert('Successfully joined the challenge!');
+                await loadChallenges();
+            } catch (error) {
+                alert('Error joining challenge');
+                console.error(error);
+            }
+        }
+        
+        async function submitChallenge(challengeId) {
+            const submission = prompt('Enter your submission (photo URL, description, etc.):');
+            
+            if (!submission) {
+                return;
+            }
+            
+            try {
+                await api.submitChallenge(challengeId, submission);
+                alert('Challenge submitted successfully! Waiting for admin verification.');
+                await loadChallenges();
+            } catch (error) {
+                alert('Error submitting challenge');
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

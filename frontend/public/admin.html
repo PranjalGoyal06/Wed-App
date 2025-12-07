@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Wedding App</title>
+    <link rel="stylesheet" href="/frontend/src/styles/main.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>💒 Wedding App - Admin</h1>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html">Home</a>
+                <a href="admin.html">Dashboard</a>
+                <a href="#" id="logoutLink">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <section style="padding: 2rem 0; background: #f9f9f9; min-height: calc(100vh - 200px);">
+        <div class="container">
+            <h1 style="color: #667eea; margin-bottom: 2rem;">👨‍💼 Admin Dashboard</h1>
+            
+            <!-- Stats Dashboard -->
+            <div id="statsContainer" class="dashboard-stats"></div>
+            
+            <!-- Admin Actions -->
+            <div style="margin-top: 3rem;">
+                <h2 style="color: #667eea; margin-bottom: 1.5rem;">Quick Actions</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 3rem;">
+                    <button class="btn btn-primary" onclick="showSection('createGame')">Create Game</button>
+                    <button class="btn btn-primary" onclick="showSection('createChallenge')">Create Challenge</button>
+                    <button class="btn btn-primary" onclick="showSection('createEvent')">Create Event</button>
+                    <button class="btn btn-primary" onclick="showSection('broadcast')">Broadcast Notification</button>
+                </div>
+            </div>
+            
+            <!-- Create Forms -->
+            <div id="createGame" class="form-container" style="display: none;">
+                <h3>Create New Game</h3>
+                <div id="gameAlert"></div>
+                <form id="gameForm">
+                    <div class="form-group">
+                        <label for="gameName">Game Name</label>
+                        <input type="text" id="gameName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="gameType">Game Type</label>
+                        <select id="gameType" required>
+                            <option value="quiz">Quiz</option>
+                            <option value="trivia">Trivia</option>
+                            <option value="photo-booth">Photo Booth</option>
+                            <option value="guess-the-couple">Guess the Couple</option>
+                            <option value="memory-match">Memory Match</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="gameDescription">Description</label>
+                        <textarea id="gameDescription" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Game</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideSection('createGame')">Cancel</button>
+                </form>
+            </div>
+            
+            <div id="createChallenge" class="form-container" style="display: none;">
+                <h3>Create New Challenge</h3>
+                <div id="challengeAlert"></div>
+                <form id="challengeForm">
+                    <div class="form-group">
+                        <label for="challengeTitle">Challenge Title</label>
+                        <input type="text" id="challengeTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="challengeType">Challenge Type</label>
+                        <select id="challengeType" required>
+                            <option value="photo">Photo</option>
+                            <option value="social">Social</option>
+                            <option value="team">Team</option>
+                            <option value="individual">Individual</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="challengeDescription">Description</label>
+                        <textarea id="challengeDescription" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="challengeRequirements">Requirements</label>
+                        <textarea id="challengeRequirements"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="challengePoints">Points</label>
+                        <input type="number" id="challengePoints" value="50" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Challenge</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideSection('createChallenge')">Cancel</button>
+                </form>
+            </div>
+            
+            <div id="createEvent" class="form-container" style="display: none;">
+                <h3>Create New Event</h3>
+                <div id="eventAlert"></div>
+                <form id="eventForm">
+                    <div class="form-group">
+                        <label for="eventTitle">Event Title</label>
+                        <input type="text" id="eventTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventType">Event Type</label>
+                        <select id="eventType" required>
+                            <option value="ceremony">Ceremony</option>
+                            <option value="reception">Reception</option>
+                            <option value="cocktail">Cocktail</option>
+                            <option value="dinner">Dinner</option>
+                            <option value="dance">Dance</option>
+                            <option value="game">Game</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventDescription">Description</label>
+                        <textarea id="eventDescription" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventStartTime">Start Time</label>
+                        <input type="datetime-local" id="eventStartTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventVenue">Venue Name</label>
+                        <input type="text" id="eventVenue">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventAddress">Address</label>
+                        <input type="text" id="eventAddress">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventNotifyBefore">Notify Before (minutes)</label>
+                        <input type="number" id="eventNotifyBefore" value="30">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Event</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideSection('createEvent')">Cancel</button>
+                </form>
+            </div>
+            
+            <div id="broadcast" class="form-container" style="display: none;">
+                <h3>Broadcast Notification</h3>
+                <div id="broadcastAlert"></div>
+                <form id="broadcastForm">
+                    <div class="form-group">
+                        <label for="notificationMessage">Message</label>
+                        <textarea id="notificationMessage" required placeholder="Enter your announcement..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="notificationType">Type</label>
+                        <select id="notificationType">
+                            <option value="announcement">Announcement</option>
+                            <option value="alert">Alert</option>
+                            <option value="info">Info</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Notification</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideSection('broadcast')">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Wedding App. Made with ❤️ for your special day!</p>
+        </div>
+    </footer>
+
+    <script src="/frontend/src/utils/auth.js"></script>
+    <script src="/frontend/src/utils/api.js"></script>
+    <script>
+        // Check if user is admin
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!requireAdmin()) return;
+            
+            await loadDashboardStats();
+            
+            // Form handlers
+            document.getElementById('gameForm').addEventListener('submit', createGame);
+            document.getElementById('challengeForm').addEventListener('submit', createChallenge);
+            document.getElementById('eventForm').addEventListener('submit', createEvent);
+            document.getElementById('broadcastForm').addEventListener('submit', broadcastNotification);
+        });
+        
+        async function loadDashboardStats() {
+            const container = document.getElementById('statsContainer');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            
+            try {
+                const response = await api.getDashboardStats();
+                
+                container.innerHTML = `
+                    <div class="stat-card">
+                        <h3>${response.stats.totalUsers}</h3>
+                        <p>Total Users</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${response.stats.totalPhotos}</h3>
+                        <p>Total Photos</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${response.stats.totalGames}</h3>
+                        <p>Total Games</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${response.stats.totalChallenges}</h3>
+                        <p>Total Challenges</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${response.stats.totalEvents}</h3>
+                        <p>Total Events</p>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = '<p style="color: red;">Error loading stats</p>';
+            }
+        }
+        
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.form-container').forEach(el => el.style.display = 'none');
+            // Show selected section
+            document.getElementById(sectionId).style.display = 'block';
+        }
+        
+        function hideSection(sectionId) {
+            document.getElementById(sectionId).style.display = 'none';
+        }
+        
+        async function createGame(e) {
+            e.preventDefault();
+            
+            const gameData = {
+                name: document.getElementById('gameName').value,
+                type: document.getElementById('gameType').value,
+                description: document.getElementById('gameDescription').value,
+                questions: [] // You can add question builder here
+            };
+            
+            try {
+                const response = await api.createGame(gameData);
+                document.getElementById('gameAlert').innerHTML = 
+                    '<div class="alert alert-success">Game created successfully!</div>';
+                document.getElementById('gameForm').reset();
+                await loadDashboardStats();
+            } catch (error) {
+                document.getElementById('gameAlert').innerHTML = 
+                    '<div class="alert alert-error">Error creating game</div>';
+            }
+        }
+        
+        async function createChallenge(e) {
+            e.preventDefault();
+            
+            const challengeData = {
+                title: document.getElementById('challengeTitle').value,
+                type: document.getElementById('challengeType').value,
+                description: document.getElementById('challengeDescription').value,
+                requirements: document.getElementById('challengeRequirements').value,
+                points: parseInt(document.getElementById('challengePoints').value)
+            };
+            
+            try {
+                const response = await api.createChallenge(challengeData);
+                document.getElementById('challengeAlert').innerHTML = 
+                    '<div class="alert alert-success">Challenge created successfully!</div>';
+                document.getElementById('challengeForm').reset();
+                await loadDashboardStats();
+            } catch (error) {
+                document.getElementById('challengeAlert').innerHTML = 
+                    '<div class="alert alert-error">Error creating challenge</div>';
+            }
+        }
+        
+        async function createEvent(e) {
+            e.preventDefault();
+            
+            const eventData = {
+                title: document.getElementById('eventTitle').value,
+                eventType: document.getElementById('eventType').value,
+                description: document.getElementById('eventDescription').value,
+                startTime: document.getElementById('eventStartTime').value,
+                location: {
+                    venue: document.getElementById('eventVenue').value,
+                    address: document.getElementById('eventAddress').value
+                },
+                notifyBefore: parseInt(document.getElementById('eventNotifyBefore').value)
+            };
+            
+            try {
+                const response = await api.createEvent(eventData);
+                document.getElementById('eventAlert').innerHTML = 
+                    '<div class="alert alert-success">Event created successfully!</div>';
+                document.getElementById('eventForm').reset();
+                await loadDashboardStats();
+            } catch (error) {
+                document.getElementById('eventAlert').innerHTML = 
+                    '<div class="alert alert-error">Error creating event</div>';
+            }
+        }
+        
+        async function broadcastNotification(e) {
+            e.preventDefault();
+            
+            const message = document.getElementById('notificationMessage').value;
+            const type = document.getElementById('notificationType').value;
+            
+            try {
+                await api.broadcastNotification(message, type);
+                document.getElementById('broadcastAlert').innerHTML = 
+                    '<div class="alert alert-success">Notification sent to all users!</div>';
+                document.getElementById('broadcastForm').reset();
+            } catch (error) {
+                document.getElementById('broadcastAlert').innerHTML = 
+                    '<div class="alert alert-error">Error sending notification</div>';
+            }
+        }
+    </script>
+</body>
+</html>
