@@ -1,0 +1,57 @@
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+const PORT = 3000;
+
+// MIME types
+const mimeTypes = {
+  '.html': 'text/html',
+  '.css': 'text/css',
+  '.js': 'text/javascript',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon'
+};
+
+const server = http.createServer((req, res) => {
+  console.log(`${req.method} ${req.url}`);
+  
+  // Default to index.html
+  let filePath = req.url === '/' ? '/frontend/public/index.html' : req.url;
+  
+  // Map paths
+  if (filePath.startsWith('/frontend/')) {
+    filePath = path.join(__dirname, filePath);
+  } else {
+    filePath = path.join(__dirname, '/frontend/public', filePath);
+  }
+  
+  // Get file extension
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType = mimeTypes[ext] || 'application/octet-stream';
+  
+  // Read and serve file
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        res.writeHead(404, { 'Content-Type': 'text/html' });
+        res.end('<h1>404 - File Not Found</h1>', 'utf-8');
+      } else {
+        res.writeHead(500);
+        res.end(`Server Error: ${err.code}`, 'utf-8');
+      }
+    } else {
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content, 'utf-8');
+    }
+  });
+});
+
+server.listen(PORT, () => {
+  console.log(`Frontend server running at http://localhost:${PORT}/`);
+  console.log(`Open http://localhost:${PORT}/ in your browser`);
+});

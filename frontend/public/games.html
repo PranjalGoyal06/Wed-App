@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games - Wedding App</title>
+    <link rel="stylesheet" href="/frontend/src/styles/main.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>💒 Wedding App</h1>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html">Home</a>
+                <a href="photos.html">Photos</a>
+                <a href="games.html">Games</a>
+                <a href="challenges.html">Challenges</a>
+                <a href="events.html">Events</a>
+                <a href="admin.html" id="adminLink" style="display: none;">Admin</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="#" id="logoutLink" style="display: none;">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <section style="padding: 2rem 0; background: #f9f9f9; min-height: calc(100vh - 200px);">
+        <div class="container">
+            <h1 style="color: #667eea; margin-bottom: 2rem;">🎮 Wedding Games</h1>
+            
+            <div id="gamesLoading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading games...</p>
+            </div>
+            
+            <div id="gamesGrid" class="game-grid"></div>
+            
+            <!-- Game Modal -->
+            <div id="gameModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                 background: rgba(0,0,0,0.7); z-index: 1000; overflow-y: auto;">
+                <div style="max-width: 800px; margin: 50px auto; background: white; padding: 2rem; border-radius: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <h2 id="gameTitle" style="color: #667eea;"></h2>
+                        <button onclick="closeGameModal()" style="background: none; border: none; font-size: 2rem; cursor: pointer;">×</button>
+                    </div>
+                    <div id="gameContent"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Wedding App. Made with ❤️ for your special day!</p>
+        </div>
+    </footer>
+
+    <script src="/frontend/src/utils/auth.js"></script>
+    <script src="/frontend/src/utils/api.js"></script>
+    <script>
+        let currentGame = null;
+        let userAnswers = [];
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadGames();
+        });
+        
+        async function loadGames() {
+            const grid = document.getElementById('gamesGrid');
+            const loading = document.getElementById('gamesLoading');
+            
+            loading.style.display = 'block';
+            grid.innerHTML = '';
+            
+            try {
+                const response = await api.getAllGames();
+                loading.style.display = 'none';
+                
+                if (response.games && response.games.length > 0) {
+                    response.games.forEach(game => {
+                        const gameCard = createGameCard(game);
+                        grid.appendChild(gameCard);
+                    });
+                } else {
+                    grid.innerHTML = '<p style="text-align: center; grid-column: 1/-1;">No games available yet.</p>';
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                grid.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: red;">Error loading games.</p>';
+            }
+        }
+        
+        function createGameCard(game) {
+            const card = document.createElement('div');
+            card.className = 'game-card';
+            
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <h3>${game.name}</h3>
+                    <span style="background: #667eea; color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">
+                        ${game.type}
+                    </span>
+                </div>
+                <p style="margin: 1rem 0; color: #666;">${game.description}</p>
+                <div style="margin: 1rem 0;">
+                    <p style="font-size: 0.9rem;">
+                        👥 ${game.leaderboard?.length || 0} players
+                    </p>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-primary" onclick="playGame('${game._id}')">Play Now</button>
+                    <button class="btn btn-secondary" onclick="viewLeaderboard('${game._id}')">Leaderboard</button>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        async function playGame(gameId) {
+            if (!localStorage.getItem('token')) {
+                alert('Please login to play games');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                const response = await api.getGame(gameId);
+                currentGame = response.game;
+                userAnswers = [];
+                
+                document.getElementById('gameTitle').textContent = currentGame.name;
+                
+                let content = `<p style="margin-bottom: 2rem; color: #666;">${currentGame.description}</p>`;
+                
+                if (currentGame.questions && currentGame.questions.length > 0) {
+                    content += '<div id="questionsContainer">';
+                    currentGame.questions.forEach((q, index) => {
+                        content += `
+                            <div style="margin-bottom: 2rem; padding: 1.5rem; background: #f9f9f9; border-radius: 8px;">
+                                <h4 style="color: #667eea; margin-bottom: 1rem;">Question ${index + 1}: ${q.question}</h4>
+                                <div style="display: grid; gap: 0.5rem;">
+                                    ${q.options.map((option, optIndex) => `
+                                        <label style="padding: 0.8rem; background: white; border: 2px solid #ddd; border-radius: 5px; cursor: pointer;">
+                                            <input type="radio" name="question${index}" value="${option}" 
+                                                   onchange="selectAnswer(${index}, '${option}')" style="margin-right: 0.5rem;">
+                                            ${option}
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    content += '</div>';
+                    content += '<button class="btn btn-primary" onclick="submitGameScore()">Submit Answers</button>';
+                } else {
+                    content += '<p>This game is under construction. Check back soon!</p>';
+                }
+                
+                document.getElementById('gameContent').innerHTML = content;
+                document.getElementById('gameModal').style.display = 'block';
+            } catch (error) {
+                alert('Error loading game');
+                console.error(error);
+            }
+        }
+        
+        function selectAnswer(questionIndex, answer) {
+            userAnswers[questionIndex] = answer;
+        }
+        
+        async function submitGameScore() {
+            if (userAnswers.length !== currentGame.questions.length) {
+                alert('Please answer all questions');
+                return;
+            }
+            
+            try {
+                const response = await api.submitScore(currentGame._id, 0, userAnswers);
+                
+                document.getElementById('gameContent').innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <h2 style="color: #667eea; margin-bottom: 1rem;">🎉 Game Complete!</h2>
+                        <p style="font-size: 1.5rem; margin-bottom: 2rem;">Your Score: ${response.score} points</p>
+                        <button class="btn btn-primary" onclick="closeGameModal(); loadGames();">Close</button>
+                    </div>
+                `;
+            } catch (error) {
+                alert('Error submitting score');
+                console.error(error);
+            }
+        }
+        
+        async function viewLeaderboard(gameId) {
+            try {
+                const response = await api.getLeaderboard(gameId);
+                const game = await api.getGame(gameId);
+                
+                document.getElementById('gameTitle').textContent = game.game.name + ' - Leaderboard';
+                
+                let content = '<div class="leaderboard">';
+                
+                if (response.leaderboard && response.leaderboard.length > 0) {
+                    response.leaderboard.forEach((entry, index) => {
+                        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                        content += `
+                            <div class="leaderboard-item">
+                                <span>${medal} ${index + 1}. ${entry.user?.name || 'Anonymous'}</span>
+                                <span style="font-weight: bold; color: #667eea;">${entry.score} pts</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    content += '<p>No scores yet. Be the first to play!</p>';
+                }
+                
+                content += '</div>';
+                
+                document.getElementById('gameContent').innerHTML = content;
+                document.getElementById('gameModal').style.display = 'block';
+            } catch (error) {
+                alert('Error loading leaderboard');
+                console.error(error);
+            }
+        }
+        
+        function closeGameModal() {
+            document.getElementById('gameModal').style.display = 'none';
+            currentGame = null;
+            userAnswers = [];
+        }
+    </script>
+</body>
+</html>

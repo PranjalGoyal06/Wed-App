@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events - Wedding App</title>
+    <link rel="stylesheet" href="/frontend/src/styles/main.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>💒 Wedding App</h1>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html">Home</a>
+                <a href="photos.html">Photos</a>
+                <a href="games.html">Games</a>
+                <a href="challenges.html">Challenges</a>
+                <a href="events.html">Events</a>
+                <a href="admin.html" id="adminLink" style="display: none;">Admin</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="#" id="logoutLink" style="display: none;">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <section style="padding: 2rem 0; background: #f9f9f9; min-height: calc(100vh - 200px);">
+        <div class="container">
+            <h1 style="color: #667eea; margin-bottom: 2rem;">🔔 Wedding Events</h1>
+            
+            <div style="margin-bottom: 2rem; display: flex; gap: 1rem;">
+                <button class="btn btn-primary" onclick="loadEvents('upcoming')">Upcoming Events</button>
+                <button class="btn btn-secondary" onclick="loadEvents('past')">Past Events</button>
+                <button class="btn btn-secondary" onclick="loadEvents('all')">All Events</button>
+            </div>
+            
+            <div id="eventsLoading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading events...</p>
+            </div>
+            
+            <div id="eventsContainer"></div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Wedding App. Made with ❤️ for your special day!</p>
+        </div>
+    </footer>
+
+    <script src="/frontend/src/utils/auth.js"></script>
+    <script src="/frontend/src/utils/api.js"></script>
+    <script>
+        let currentFilter = 'upcoming';
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadEvents('upcoming');
+        });
+        
+        async function loadEvents(filter = 'upcoming') {
+            currentFilter = filter;
+            const container = document.getElementById('eventsContainer');
+            const loading = document.getElementById('eventsLoading');
+            
+            loading.style.display = 'block';
+            container.innerHTML = '';
+            
+            try {
+                const params = {};
+                if (filter === 'upcoming') {
+                    params.upcoming = 'true';
+                } else if (filter === 'past') {
+                    params.past = 'true';
+                }
+                
+                const response = await api.getAllEvents(params);
+                loading.style.display = 'none';
+                
+                if (response.events && response.events.length > 0) {
+                    response.events.forEach(event => {
+                        const eventCard = createEventCard(event);
+                        container.appendChild(eventCard);
+                    });
+                } else {
+                    container.innerHTML = `<p style="text-align: center;">No ${filter} events found.</p>`;
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                container.innerHTML = '<p style="text-align: center; color: red;">Error loading events.</p>';
+            }
+        }
+        
+        function createEventCard(event) {
+            const card = document.createElement('div');
+            card.className = 'game-card';
+            card.style.marginBottom = '1.5rem';
+            
+            const startDate = new Date(event.startTime);
+            const endDate = event.endTime ? new Date(event.endTime) : null;
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const isAttending = event.attendees?.some(a => a._id === user.id || a === user.id);
+            const isPast = startDate < new Date();
+            
+            const typeColors = {
+                ceremony: '#e74c3c',
+                reception: '#3498db',
+                cocktail: '#f39c12',
+                dinner: '#16a085',
+                dance: '#9b59b6',
+                game: '#e67e22',
+                custom: '#667eea'
+            };
+            
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                    <h3 style="color: #667eea;">${event.title}</h3>
+                    <span style="background: ${typeColors[event.eventType] || '#667eea'}; color: white; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">
+                        ${event.eventType}
+                    </span>
+                </div>
+                
+                <p style="margin-bottom: 1rem; color: #666;">${event.description}</p>
+                
+                <div style="margin-bottom: 1rem;">
+                    <p style="margin: 0.5rem 0; color: #555;">
+                        <strong>📅 Date:</strong> ${startDate.toLocaleString()}
+                    </p>
+                    ${endDate ? `<p style="margin: 0.5rem 0; color: #555;"><strong>⏰ End:</strong> ${endDate.toLocaleString()}</p>` : ''}
+                    ${event.location?.venue ? `
+                        <p style="margin: 0.5rem 0; color: #555;">
+                            <strong>📍 Venue:</strong> ${event.location.venue}
+                            ${event.location.address ? `<br><span style="font-size: 0.9rem;">${event.location.address}</span>` : ''}
+                        </p>
+                    ` : ''}
+                    <p style="margin: 0.5rem 0; color: #555;">
+                        <strong>👥 Attendees:</strong> ${event.attendees?.length || 0} people
+                    </p>
+                    ${event.notifyBefore ? `<p style="margin: 0.5rem 0; color: #555; font-size: 0.9rem;">🔔 Reminder ${event.notifyBefore} minutes before</p>` : ''}
+                </div>
+                
+                ${!isPast ? `
+                    <button class="btn ${isAttending ? 'btn-success' : 'btn-primary'}" 
+                            onclick="rsvpEvent('${event._id}')" 
+                            id="rsvp-${event._id}">
+                        ${isAttending ? '✓ Attending' : 'RSVP'}
+                    </button>
+                ` : '<span style="color: #999;">Event has ended</span>'}
+            `;
+            
+            return card;
+        }
+        
+        async function rsvpEvent(eventId) {
+            if (!localStorage.getItem('token')) {
+                alert('Please login to RSVP to events');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                const response = await api.rsvpEvent(eventId);
+                alert(response.message);
+                await loadEvents(currentFilter);
+            } catch (error) {
+                alert('Error updating RSVP');
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding App - Home</title>
+    <link rel="stylesheet" href="/frontend/src/styles/main.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>💒 Wedding App</h1>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="index.html">Home</a>
+                <a href="photos.html">Photos</a>
+                <a href="games.html">Games</a>
+                <a href="challenges.html">Challenges</a>
+                <a href="events.html">Events</a>
+                <a href="admin.html" id="adminLink" style="display: none;">Admin</a>
+                <a href="login.html" id="loginLink">Login</a>
+                <a href="#" id="logoutLink" style="display: none;">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Welcome to Our Wedding Celebration! 🎉</h1>
+            <p>Share memories, play games, and celebrate with us!</p>
+            <div class="hero-buttons">
+                <a href="photos.html" class="btn btn-primary">View Photos</a>
+                <a href="games.html" class="btn btn-secondary">Play Games</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2>Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📸</div>
+                    <h3>Face Recognition Photo Filter</h3>
+                    <p>Upload your photo and find all pictures featuring you using our advanced face recognition technology!</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎮</div>
+                    <h3>Interactive Games</h3>
+                    <p>Participate in fun wedding games, trivia, and challenges. Compete with other guests on the leaderboard!</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <h3>Challenges</h3>
+                    <p>Complete exciting challenges throughout the wedding and earn points. Be the challenge champion!</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔔</div>
+                    <h3>Event Notifications</h3>
+                    <p>Never miss an important moment! Get timely notifications about upcoming events and activities.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="info">
+        <div class="container">
+            <h2>How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Register</h3>
+                    <p>Create your account to get started</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Upload Photos</h3>
+                    <p>Share your favorite wedding moments</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Join Games</h3>
+                    <p>Participate in fun activities and challenges</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Stay Updated</h3>
+                    <p>Receive notifications about events</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Wedding App. Made with ❤️ for your special day!</p>
+        </div>
+    </footer>
+
+    <script src="/frontend/src/utils/auth.js"></script>
+    <script src="/frontend/src/utils/api.js"></script>
+    <script>
+        // Check authentication status
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (token) {
+                document.getElementById('loginLink').style.display = 'none';
+                document.getElementById('logoutLink').style.display = 'block';
+                
+                if (user.role === 'admin') {
+                    document.getElementById('adminLink').style.display = 'block';
+                }
+            }
+            
+            // Logout functionality
+            document.getElementById('logoutLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            });
+        });
+    </script>
+</body>
+</html>
